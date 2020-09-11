@@ -1252,6 +1252,98 @@ inline static std::string ArrayToString(const std::vector<double>& arr, size_t n
 }
 
 
+inline static const char* Atof(const char* p, double* out) {
+  int frac;
+  double sign, value, scale;
+  *out = NAN;
+  // Skip leading white space, if any.
+  while (*p == ' ') {
+    ++p;
+  }
+  // Get sign, if any.
+  sign = 1.0;
+  if (*p == '-') {
+    sign = -1.0;
+    ++p;
+  } else if (*p == '+') {
+    ++p;
+  }
+
+  // is a number
+  if ((*p >= '0' && *p <= '9') || *p == '.' || *p == 'e' || *p == 'E') {
+    // Get digits before decimal point or exponent, if any.
+    for (value = 0.0; *p >= '0' && *p <= '9'; ++p) {
+      value = value * 10.0 + (*p - '0');
+    }
+
+    // Get digits after decimal point, if any.
+    if (*p == '.') {
+      double right = 0.0;
+      int nn = 0;
+      ++p;
+      while (*p >= '0' && *p <= '9') {
+        right = (*p - '0') + right * 10.0;
+        ++nn;
+        ++p;
+      }
+      value += right / Common::Pow(10.0, nn);
+    }
+
+    // Handle exponent, if any.
+    frac = 0;
+    scale = 1.0;
+    if ((*p == 'e') || (*p == 'E')) {
+      uint32_t expon;
+      // Get sign of exponent, if any.
+      ++p;
+      if (*p == '-') {
+        frac = 1;
+        ++p;
+      } else if (*p == '+') {
+        ++p;
+      }
+      // Get digits of exponent, if any.
+      for (expon = 0; *p >= '0' && *p <= '9'; ++p) {
+        expon = expon * 10 + (*p - '0');
+      }
+      if (expon > 308) expon = 308;
+      // Calculate scaling factor.
+      while (expon >= 50) { scale *= 1E50; expon -= 50; }
+      while (expon >= 8) { scale *= 1E8;  expon -= 8; }
+      while (expon > 0) { scale *= 10.0; expon -= 1; }
+    }
+    // Return signed and scaled floating point result.
+    *out = sign * (frac ? (value / scale) : (value * scale));
+  } else {
+    size_t cnt = 0;
+    while (*(p + cnt) != '\0' && *(p + cnt) != ' '
+           && *(p + cnt) != '\t' && *(p + cnt) != ','
+           && *(p + cnt) != '\n' && *(p + cnt) != '\r'
+           && *(p + cnt) != ':') {
+      ++cnt;
+    }
+    if (cnt > 0) {
+      std::string tmp_str(p, cnt);
+      std::transform(tmp_str.begin(), tmp_str.end(), tmp_str.begin(), Common::tolower);
+      if (tmp_str == std::string("na") || tmp_str == std::string("nan") ||
+          tmp_str == std::string("null")) {
+        *out = NAN;
+      } else if (tmp_str == std::string("inf") || tmp_str == std::string("infinity")) {
+        *out = sign * 1e308;
+      } else {
+        Log::Fatal("Unknown token %s in data file", tmp_str.c_str());
+      }
+      p += cnt;
+    }
+  }
+
+  while (*p == ' ') {
+    ++p;
+  }
+
+  return p;
+}
+
 } // Namespace Common2
 
 

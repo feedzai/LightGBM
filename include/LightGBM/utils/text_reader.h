@@ -38,6 +38,7 @@ class TextReader {
         Log::Fatal("Could not open %s", filename);
       }
       std::stringstream str_buf;
+      // Imbue C locale??? - Parameter?
       char read_c;
       size_t nread = reader->Read(&read_c, 1);
       while (nread == 1) {
