@@ -225,34 +225,34 @@ std::string Tree::ToString() const {
   str_buf << "num_leaves=" << num_leaves_ << '\n';
   str_buf << "num_cat=" << num_cat_ << '\n';
   str_buf << "split_feature="
-    << Common::ArrayToStringFast(split_feature_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(split_feature_, num_leaves_ - 1) << '\n';
   str_buf << "split_gain="
-    << Common::ArrayToStringFast(split_gain_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(split_gain_, num_leaves_ - 1) << '\n';
   str_buf << "threshold="
-    << Common::ArrayToString(threshold_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToString(threshold_, num_leaves_ - 1) << '\n';
   str_buf << "decision_type="
-    << Common::ArrayToStringFast(Common::ArrayCast<int8_t, int>(decision_type_), num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(Common::ArrayCast<int8_t, int>(decision_type_), num_leaves_ - 1) << '\n';
   str_buf << "left_child="
-    << Common::ArrayToStringFast(left_child_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(left_child_, num_leaves_ - 1) << '\n';
   str_buf << "right_child="
-    << Common::ArrayToStringFast(right_child_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(right_child_, num_leaves_ - 1) << '\n';
   str_buf << "leaf_value="
-    << Common::ArrayToString(leaf_value_, num_leaves_) << '\n';
+    << Common2::ArrayToString(leaf_value_, num_leaves_) << '\n';
   str_buf << "leaf_weight="
-    << Common::ArrayToString(leaf_weight_, num_leaves_) << '\n';
+    << Common2::ArrayToString(leaf_weight_, num_leaves_) << '\n';
   str_buf << "leaf_count="
-    << Common::ArrayToStringFast(leaf_count_, num_leaves_) << '\n';
+    << Common2::ArrayToStringFast(leaf_count_, num_leaves_) << '\n';
   str_buf << "internal_value="
-    << Common::ArrayToStringFast(internal_value_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(internal_value_, num_leaves_ - 1) << '\n';
   str_buf << "internal_weight="
-    << Common::ArrayToStringFast(internal_weight_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(internal_weight_, num_leaves_ - 1) << '\n';
   str_buf << "internal_count="
-    << Common::ArrayToStringFast(internal_count_, num_leaves_ - 1) << '\n';
+    << Common2::ArrayToStringFast(internal_count_, num_leaves_ - 1) << '\n';
   if (num_cat_ > 0) {
     str_buf << "cat_boundaries="
-      << Common::ArrayToStringFast(cat_boundaries_, num_cat_ + 1) << '\n';
+      << Common2::ArrayToStringFast(cat_boundaries_, num_cat_ + 1) << '\n';
     str_buf << "cat_threshold="
-      << Common::ArrayToStringFast(cat_threshold_, cat_threshold_.size()) << '\n';
+      << Common2::ArrayToStringFast(cat_threshold_, cat_threshold_.size()) << '\n';
   }
   str_buf << "shrinkage=" << shrinkage_ << '\n';
   str_buf << '\n';
