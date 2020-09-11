@@ -18,6 +18,16 @@ namespace LightGBM {
 
 const char* kModelVersion = "v3";
 
+
+////////////////////////////////////////////////////////////////////////////////////
+#include <locale>
+
+////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 std::string GBDT::DumpModel(int start_iteration, int num_iteration, int feature_importance_type) const {
   std::stringstream str_buf;
 
@@ -34,11 +44,11 @@ std::string GBDT::DumpModel(int start_iteration, int num_iteration, int feature_
 
   str_buf << "\"average_output\":" << (average_output_ ? "true" : "false") << ",\n";
 
-  str_buf << "\"feature_names\":[\"" << Common::Join(feature_names_, "\",\"")
+  str_buf << "\"feature_names\":[\"" << Common2::Join(feature_names_, "\",\"")
           << "\"]," << '\n';
 
   str_buf << "\"monotone_constraints\":["
-          << Common::Join(monotone_constraints_, ",") << "]," << '\n';
+          << Common2::Join(monotone_constraints_, ",") << "]," << '\n';
 
   str_buf << "\"feature_infos\":" << "{";
   bool first_obj = true;
@@ -61,7 +71,7 @@ std::string GBDT::DumpModel(int start_iteration, int num_iteration, int feature_
       auto min_idx = ArrayArgs<int>::ArgMin(vals);
       json_str_buf << "{\"min_value\":" << vals[min_idx] << ",";
       json_str_buf << "\"max_value\":" << vals[max_idx] << ",";
-      json_str_buf << "\"values\":[" << Common::Join(vals, ",") << "]}";
+      json_str_buf << "\"values\":[" << Common2::Join(vals, ",") << "]}";
     } else {  // unused feature
       continue;
     }
@@ -325,14 +335,14 @@ std::string GBDT::SaveModelToString(int start_iteration, int num_iteration, int 
     ss << "average_output" << '\n';
   }
 
-  ss << "feature_names=" << Common::Join(feature_names_, " ") << '\n';
+  ss << "feature_names=" << Common2::Join(feature_names_, " ") << '\n';
 
   if (monotone_constraints_.size() != 0) {
-    ss << "monotone_constraints=" << Common::Join(monotone_constraints_, " ")
+    ss << "monotone_constraints=" << Common2::Join(monotone_constraints_, " ")
        << '\n';
   }
 
-  ss << "feature_infos=" << Common::Join(feature_infos_, " ") << '\n';
+  ss << "feature_infos=" << Common2::Join(feature_infos_, " ") << '\n';
 
   int num_used_model = static_cast<int>(models_.size());
   int total_iteration = num_used_model / num_tree_per_iteration_;
@@ -356,7 +366,7 @@ std::string GBDT::SaveModelToString(int start_iteration, int num_iteration, int 
     tree_sizes[idx] = tree_strs[idx].size();
   }
 
-  ss << "tree_sizes=" << Common::Join(tree_sizes, " ") << '\n';
+  ss << "tree_sizes=" << Common2::Join(tree_sizes, " ") << '\n';
   ss << '\n';
 
   for (int i = 0; i < num_used_model - start_model; ++i) {

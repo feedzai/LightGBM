@@ -1137,6 +1137,124 @@ class FunctionTimer {
 
 extern Common::Timer global_timer;
 
+
+
+namespace Common2 {
+
+  template<typename T>
+  inline static std::string Join(const std::vector<T>& strs, const char* delimiter) {
+    if (strs.empty()) {
+      return std::string("");
+    }
+    std::stringstream str_buf;
+    std::locale C_locale("C");
+    str_buf.imbue(C_locale);
+    str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+    str_buf << strs[0];
+    for (size_t i = 1; i < strs.size(); ++i) {
+      str_buf << delimiter;
+      str_buf << strs[i];
+    }
+    return str_buf.str();
+  }
+
+  template<>
+  inline std::string Join<int8_t>(const std::vector<int8_t>& strs, const char* delimiter) {
+    if (strs.empty()) {
+      return std::string("");
+    }
+    std::stringstream str_buf;
+    str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+    str_buf << static_cast<int16_t>(strs[0]);
+    for (size_t i = 1; i < strs.size(); ++i) {
+      str_buf << delimiter;
+      str_buf << static_cast<int16_t>(strs[i]);
+    }
+    return str_buf.str();
+  }
+
+  template<typename T>
+  inline static std::string Join(const std::vector<T>& strs, size_t start, size_t end, const char* delimiter) {
+    if (end - start <= 0) {
+      return std::string("");
+    }
+    start = std::min(start, static_cast<size_t>(strs.size()) - 1);
+    end = std::min(end, static_cast<size_t>(strs.size()));
+    std::stringstream str_buf;
+    str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+    str_buf << strs[start];
+    for (size_t i = start + 1; i < end; ++i) {
+      str_buf << delimiter;
+      str_buf << strs[i];
+    }
+    return str_buf.str();
+  }
+
+
+template<typename T>
+inline static std::vector<T> StringToArrayFast(const std::string& str, int n) {
+  if (n == 0) {
+    return std::vector<T>();
+  }
+  auto p_str = str.c_str();
+  LightGBM::Common::__StringToTHelperFast<T, std::is_floating_point<T>::value> helper;
+  std::vector<T> ret(n);
+  for (int i = 0; i < n; ++i) {
+    p_str = helper(p_str, &ret[i]);
+  }
+  return ret;
+}
+
+template<typename T>
+inline static std::vector<T> StringToArray(const std::string& str, char delimiter) {
+  std::vector<std::string> strs = LightGBM::Common::Split(str.c_str(), delimiter);
+  std::vector<T> ret;
+  ret.reserve(strs.size());
+  LightGBM::Common::__StringToTHelper<T, std::is_floating_point<T>::value> helper;
+  for (const auto& s : strs) {
+    ret.push_back(helper(s));
+  }
+  return ret;
+}
+
+template<typename T>
+inline static std::string ArrayToStringFast(const std::vector<T>& arr, size_t n) {
+  if (arr.empty() || n == 0) {
+    return std::string("");
+  }
+  LightGBM::Common::__TToStringHelperFast<T, std::is_floating_point<T>::value, std::is_unsigned<T>::value> helper;
+  const size_t buf_len = 16;
+  std::vector<char> buffer(buf_len);
+  std::stringstream str_buf;
+  helper(arr[0], buffer.data(), buf_len);
+  str_buf << buffer.data();
+  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
+    helper(arr[i], buffer.data(), buf_len);
+    str_buf << ' ' << buffer.data();
+  }
+  return str_buf.str();
+}
+
+inline static std::string ArrayToString(const std::vector<double>& arr, size_t n) {
+  if (arr.empty() || n == 0) {
+    return std::string("");
+  }
+  const size_t buf_len = 32;
+  std::vector<char> buffer(buf_len);
+  std::stringstream str_buf;
+  LightGBM::Common::DoubleToStr(arr[0], buffer.data(), buf_len);
+  str_buf << buffer.data();
+  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
+    LightGBM::Common::DoubleToStr(arr[i], buffer.data(), buf_len);
+    str_buf << ' ' << buffer.data();
+  }
+  return str_buf.str();
+}
+
+
+} // Namespace Common2
+
+
 }  // namespace LightGBM
 
 #endif   // LightGBM_UTILS_COMMON_FUN_H_
