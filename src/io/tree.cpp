@@ -528,8 +528,7 @@ Tree::Tree(const char* str, size_t* used_len) {
   Common::Atoi(key_vals["num_cat"].c_str(), &num_cat_);
 
   if (key_vals.count("leaf_value")) { Log::Info("leaf_value");
-    //leaf_value_ = Common2::StringToArray<double>(key_vals["leaf_value"], num_leaves_);
-    leaf_value_ = Common::StringToArray<double>(key_vals["leaf_value"], num_leaves_);
+    leaf_value_ = Common2::StringToArray<double>(key_vals["leaf_value"], num_leaves_);
     cmp(leaf_value_, Common::StringToArray<double>(key_vals["leaf_value"], num_leaves_));
   } else {
     Log::Fatal("Tree model string format error, should contain leaf_value field");
