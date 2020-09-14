@@ -493,6 +493,8 @@ std::string Tree::NodeToIfElseByMap(int index, bool predict_leaf_index) const {
   return str_buf.str();
 }
 
+using Common2::cmp;
+
 Tree::Tree(const char* str, size_t* used_len) {
   auto p = str;
   std::unordered_map<std::string, std::string> key_vals;
@@ -513,7 +515,7 @@ Tree::Tree(const char* str, size_t* used_len) {
   }
   *used_len = p - str;
 
-  if (key_vals.count("num_leaves") <= 0) {
+  if (key_vals.count("num_leaves") <= 0) { Log::Info("num_leaves");
     Log::Fatal("Tree model should contain num_leaves field");
   }
 
@@ -525,13 +527,14 @@ Tree::Tree(const char* str, size_t* used_len) {
 
   Common::Atoi(key_vals["num_cat"].c_str(), &num_cat_);
 
-  if (key_vals.count("leaf_value")) {
+  if (key_vals.count("leaf_value")) { Log::Info("leaf_value");
     leaf_value_ = Common2::StringToArray<double>(key_vals["leaf_value"], num_leaves_);
+    cmp(leaf_value_, Common::StringToArray<double>(key_vals["leaf_value"], num_leaves_));
   } else {
     Log::Fatal("Tree model string format error, should contain leaf_value field");
   }
 
-  if (key_vals.count("shrinkage")) {
+  if (key_vals.count("shrinkage")) { Log::Info("shrinkage");
     Common2::Atof(key_vals["shrinkage"].c_str(), &shrinkage_);
   } else {
     shrinkage_ = 1.0f;
@@ -539,81 +542,94 @@ Tree::Tree(const char* str, size_t* used_len) {
 
   if (num_leaves_ <= 1) { return; }
 
-  if (key_vals.count("left_child")) {
+  if (key_vals.count("left_child")) { Log::Info("left_child");
     left_child_ = Common2::StringToArrayFast<int>(key_vals["left_child"], num_leaves_ - 1);
+    cmp(left_child_, Common::StringToArrayFast<int>(key_vals["left_child"], num_leaves_ - 1));
   } else {
     Log::Fatal("Tree model string format error, should contain left_child field");
   }
 
-  if (key_vals.count("right_child")) {
+  if (key_vals.count("right_child")) { Log::Info("right_child");
     right_child_ = Common2::StringToArrayFast<int>(key_vals["right_child"], num_leaves_ - 1);
+    cmp(right_child_, Common::StringToArrayFast<int>(key_vals["right_child"], num_leaves_ - 1));
   } else {
     Log::Fatal("Tree model string format error, should contain right_child field");
   }
 
-  if (key_vals.count("split_feature")) {
+  if (key_vals.count("split_feature")) { Log::Info("split_feature");
     split_feature_ = Common2::StringToArrayFast<int>(key_vals["split_feature"], num_leaves_ - 1);
+    cmp(split_feature_, Common::StringToArrayFast<int>(key_vals["split_feature"], num_leaves_ - 1));
   } else {
     Log::Fatal("Tree model string format error, should contain split_feature field");
   }
 
-  if (key_vals.count("threshold")) {
+  if (key_vals.count("threshold")) { Log::Info("threshold");
     threshold_ = Common2::StringToArray<double>(key_vals["threshold"], num_leaves_ - 1);
+    cmp(threshold_, Common::StringToArray<double>(key_vals["threshold"], num_leaves_ - 1));
   } else {
     Log::Fatal("Tree model string format error, should contain threshold field");
   }
 
-  if (key_vals.count("split_gain")) {
+  if (key_vals.count("split_gain")) { Log::Info("split_gain");
     split_gain_ = Common2::StringToArrayFast<float>(key_vals["split_gain"], num_leaves_ - 1);
+    cmp(split_gain_, Common::StringToArrayFast<float>(key_vals["split_gain"], num_leaves_ - 1));
   } else {
     split_gain_.resize(num_leaves_ - 1);
   }
 
-  if (key_vals.count("internal_count")) {
+  if (key_vals.count("internal_count")) { Log::Info("internal_count");
     internal_count_ = Common2::StringToArrayFast<int>(key_vals["internal_count"], num_leaves_ - 1);
+    cmp(internal_count_, Common::StringToArrayFast<int>(key_vals["internal_count"], num_leaves_ - 1));
   } else {
     internal_count_.resize(num_leaves_ - 1);
   }
 
-  if (key_vals.count("internal_value")) {
+  if (key_vals.count("internal_value")) { Log::Info("internal_value");
     internal_value_ = Common2::StringToArrayFast<double>(key_vals["internal_value"], num_leaves_ - 1);
+    cmp(internal_value_, Common::StringToArrayFast<double>(key_vals["internal_value"], num_leaves_ - 1));
   } else {
     internal_value_.resize(num_leaves_ - 1);
   }
 
-  if (key_vals.count("internal_weight")) {
+  if (key_vals.count("internal_weight")) { Log::Info("internal_weight");
     internal_weight_ = Common2::StringToArrayFast<double>(key_vals["internal_weight"], num_leaves_ - 1);
+    cmp(internal_weight_, Common::StringToArrayFast<double>(key_vals["internal_weight"], num_leaves_ - 1));
   } else {
     internal_weight_.resize(num_leaves_ - 1);
   }
 
-  if (key_vals.count("leaf_weight")) {
+  if (key_vals.count("leaf_weight")) { Log::Info("leaf_weight");
     leaf_weight_ = Common2::StringToArray<double>(key_vals["leaf_weight"], num_leaves_);
+    cmp(leaf_weight_, Common::StringToArray<double>(key_vals["leaf_weight"], num_leaves_));
   } else {
     leaf_weight_.resize(num_leaves_);
   }
 
-  if (key_vals.count("leaf_count")) {
+  if (key_vals.count("leaf_count")) { Log::Info("leaf_count");
     leaf_count_ = Common2::StringToArrayFast<int>(key_vals["leaf_count"], num_leaves_);
+    cmp(leaf_count_, Common::StringToArrayFast<int>(key_vals["leaf_count"], num_leaves_));
   } else {
     leaf_count_.resize(num_leaves_);
   }
 
-  if (key_vals.count("decision_type")) {
+  if (key_vals.count("decision_type")) { Log::Info("decision_type");
     decision_type_ = Common2::StringToArrayFast<int8_t>(key_vals["decision_type"], num_leaves_ - 1);
+    cmp(decision_type_, Common::StringToArrayFast<int8_t>(key_vals["decision_type"], num_leaves_ - 1));
   } else {
     decision_type_ = std::vector<int8_t>(num_leaves_ - 1, 0);
   }
 
   if (num_cat_ > 0) {
-    if (key_vals.count("cat_boundaries")) {
+    if (key_vals.count("cat_boundaries")) { Log::Info("cat_boundaries");
       cat_boundaries_ = Common2::StringToArrayFast<int>(key_vals["cat_boundaries"], num_cat_ + 1);
+      cmp(cat_boundaries_, Common::StringToArrayFast<int>(key_vals["cat_boundaries"], num_cat_ + 1));
     } else {
       Log::Fatal("Tree model should contain cat_boundaries field.");
     }
 
-    if (key_vals.count("cat_threshold")) {
+    if (key_vals.count("cat_threshold")) { Log::Info("cat_threshold");
       cat_threshold_ = Common2::StringToArrayFast<uint32_t>(key_vals["cat_threshold"], cat_boundaries_.back());
+      cmp(cat_threshold_, Common::StringToArrayFast<uint32_t>(key_vals["cat_threshold"], cat_boundaries_.back()));
     } else {
       Log::Fatal("Tree model should contain cat_threshold field");
     }

@@ -1344,6 +1344,18 @@ inline static const char* Atof(const char* p, double* out) {
   return p;
 }
 
+#include <algorithm>
+
+template <class T>
+void cmp(std::vector<T> a, std::vector<T> b) {
+  if (a.size() != b.size()) {
+    Log::Fatal("Different array sizes! %d (expected=%d)", a.size(), b.size());
+  }
+
+  if (!std::equal(a.begin(), a.end(), b.begin()))
+    Log::Fatal("Different array contents!");
+}
+
 } // Namespace Common2
 
 
