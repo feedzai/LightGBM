@@ -5,6 +5,7 @@
 #ifndef LIGHTGBM_UTILS_COMMON_FUN_H_
 #define LIGHTGBM_UTILS_COMMON_FUN_H_
 
+#include "../../../fmt/include/fmt/core.h"
 #include <LightGBM/utils/log.h>
 #include <LightGBM/utils/openmp_wrapper.h>
 
@@ -408,13 +409,11 @@ inline static void Int32ToStr(int32_t value, char* buffer) {
   Uint32ToStr(u, buffer);
 }
 
+
+
 inline static void DoubleToStr(double value, char* buffer, size_t buffer_len) {
-  #ifdef _MSC_VER
-  int num_chars = sprintf_s(buffer, buffer_len, "%.17g", value);
-  #else
-  int num_chars = snprintf(buffer, buffer_len, "%.17g", value);
-  #endif
-  CHECK_GE(num_chars, 0);
+  const std::string s = fmt::format("{:.17g}", value);
+  s.copy(buffer, buffer_len);
 }
 
 inline static const char* SkipSpaceAndTab(const char* p) {

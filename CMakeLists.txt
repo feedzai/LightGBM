@@ -315,6 +315,7 @@ if(WIN32 AND (MINGW OR CYGWIN))
     TARGET_LINK_LIBRARIES(_lightgbm IPHLPAPI)
 endif()
 
+
 if(BUILD_FOR_R)
   if(MSVC)
     TARGET_LINK_LIBRARIES(_lightgbm ${LIBR_MSVC_CORE_LIBRARY})
@@ -322,6 +323,11 @@ if(BUILD_FOR_R)
     TARGET_LINK_LIBRARIES(_lightgbm ${LIBR_CORE_LIBRARY})
   endif(MSVC)
 endif(BUILD_FOR_R)
+
+# fmtlib/fmt
+add_subdirectory(external_libs/fmt)
+TARGET_LINK_LIBRARIES(lightgbm PUBLIC fmt::fmt)
+TARGET_LINK_LIBRARIES(_lightgbm PUBLIC fmt::fmt)
 
 install(TARGETS lightgbm _lightgbm
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
