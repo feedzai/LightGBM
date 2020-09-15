@@ -1141,14 +1141,14 @@ extern Common::Timer global_timer;
 
 namespace Common2 {
 
+
   template<typename T>
   inline static std::string Join(const std::vector<T>& strs, const char* delimiter) {
     if (strs.empty()) {
       return std::string("");
     }
     std::stringstream str_buf;
-    std::locale C_locale("C");
-    str_buf.imbue(C_locale);
+    str_buf.imbue(std::locale("C"));
     str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
     str_buf << strs[0];
     for (size_t i = 1; i < strs.size(); ++i) {
@@ -1164,6 +1164,7 @@ namespace Common2 {
       return std::string("");
     }
     std::stringstream str_buf;
+    str_buf.imbue(std::locale("C"));
     str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
     str_buf << static_cast<int16_t>(strs[0]);
     for (size_t i = 1; i < strs.size(); ++i) {
@@ -1181,6 +1182,7 @@ namespace Common2 {
     start = std::min(start, static_cast<size_t>(strs.size()) - 1);
     end = std::min(end, static_cast<size_t>(strs.size()));
     std::stringstream str_buf;
+    str_buf.imbue(std::locale("C"));
     str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
     str_buf << strs[start];
     for (size_t i = start + 1; i < end; ++i) {
@@ -1189,84 +1191,6 @@ namespace Common2 {
     }
     return str_buf.str();
   }
-
-
-template<typename T>
-inline static std::vector<T> StringToArrayFast(const std::string& str, int n) {
-  if (n == 0) {
-    return std::vector<T>();
-  }
-  auto p_str = str.c_str();
-  LightGBM::Common::__StringToTHelperFast<T, std::is_floating_point<T>::value> helper;
-  std::vector<T> ret(n);
-  for (int i = 0; i < n; ++i) {
-    p_str = helper(p_str, &ret[i]);
-  }
-  return ret;
-}
-
-template<typename T>
-inline static std::vector<T> StringToArray(const std::string& str, char delimiter) {
-  std::vector<std::string> strs = LightGBM::Common::Split(str.c_str(), delimiter);
-  std::vector<T> ret;
-  ret.reserve(strs.size());
-  LightGBM::Common::__StringToTHelper<T, std::is_floating_point<T>::value> helper;
-  for (const auto& s : strs) {
-    ret.push_back(helper(s));
-  }
-  return ret;
-}
-
-template<typename T>
-inline static std::vector<T> StringToArray(const std::string& str, int n) {
-  if (n == 0) {
-    return std::vector<T>();
-  }
-  std::vector<std::string> strs = LightGBM::Common::Split(str.c_str(), ' ');
-  CHECK_EQ(strs.size(), static_cast<size_t>(n));
-  std::vector<T> ret;
-  ret.reserve(strs.size());
-  LightGBM::Common::__StringToTHelper<T, std::is_floating_point<T>::value> helper;
-  for (const auto& s : strs) {
-    ret.push_back(helper(s));
-  }
-  return ret;
-}
-
-template<typename T>
-inline static std::string ArrayToStringFast(const std::vector<T>& arr, size_t n) {
-  if (arr.empty() || n == 0) {
-    return std::string("");
-  }
-  LightGBM::Common::__TToStringHelperFast<T, std::is_floating_point<T>::value, std::is_unsigned<T>::value> helper;
-  const size_t buf_len = 16;
-  std::vector<char> buffer(buf_len);
-  std::stringstream str_buf;
-  helper(arr[0], buffer.data(), buf_len);
-  str_buf << buffer.data();
-  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
-    helper(arr[i], buffer.data(), buf_len);
-    str_buf << ' ' << buffer.data();
-  }
-  return str_buf.str();
-}
-
-inline static std::string ArrayToString(const std::vector<double>& arr, size_t n) {
-  if (arr.empty() || n == 0) {
-    return std::string("");
-  }
-  const size_t buf_len = 32;
-  std::vector<char> buffer(buf_len);
-  std::stringstream str_buf;
-  LightGBM::Common::DoubleToStr(arr[0], buffer.data(), buf_len);
-  str_buf << buffer.data();
-  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
-    LightGBM::Common::DoubleToStr(arr[i], buffer.data(), buf_len);
-    str_buf << ' ' << buffer.data();
-  }
-  return str_buf.str();
-}
-
 
 inline static const char* Atof(const char* p, double* out) {
   int frac;
@@ -1359,6 +1283,162 @@ inline static const char* Atof(const char* p, double* out) {
 
   return p;
 }
+
+template<typename T, bool is_float>
+struct __StringToTHelperFast {
+  const char* operator()(const char*p, T* out) const {
+    return LightGBM::Common::Atoi(p, out);
+  }
+};
+
+template<typename T>
+struct __StringToTHelperFast<T, true> {
+  const char* operator()(const char*p, T* out) const {
+    double tmp = 0.0f;
+    auto ret = Atof(p, &tmp);
+    *out = static_cast<T>(tmp);
+    return ret;
+  }
+};
+
+template<typename T, bool is_float>
+struct __StringToTHelper {
+  T operator()(const std::string& str) const {
+    T ret = 0;
+    Atoi(str.c_str(), &ret);
+    return ret;
+  }
+};
+
+template<typename T>
+struct __StringToTHelper<T, true> {
+  T operator()(const std::string& str) const {
+    std::stringstream ss;
+    ss.imbue(std::locale("C"));
+    ss << str;
+    T tmp;
+    ss >> tmp;
+    return static_cast<T>(tmp);
+    //return static_cast<T>(std::stod(str));
+  }
+};
+
+template<typename T, bool is_float, bool is_unsign>
+struct __TToStringHelperFast {
+  void operator()(T value, char* buffer, size_t) const {
+    LightGBM::Common::Int32ToStr(value, buffer);
+  }
+};
+
+template<typename T>
+struct __TToStringHelperFast<T, true, false> {
+  void operator()(T value, char* buffer, size_t buf_len) const {
+    #ifdef _MSC_VER
+    int num_chars = sprintf_s(buffer, buf_len, "%g", value);
+    #else
+    int num_chars = snprintf(buffer, buf_len, "%g", value);
+    #endif
+    CHECK_GE(num_chars, 0);
+  }
+};
+
+template<typename T>
+struct __TToStringHelperFast<T, false, true> {
+  void operator()(T value, char* buffer, size_t) const {
+    LightGBM::Common::Uint32ToStr(value, buffer);
+  }
+};
+
+inline static void DoubleToStr(double value, char* buffer, size_t buffer_len) {
+  #ifdef _MSC_VER
+  int num_chars = sprintf_s(buffer, buffer_len, "%.17g", value);
+  #else
+  int num_chars = snprintf(buffer, buffer_len, "%.17g", value);
+  #endif
+  CHECK_GE(num_chars, 0);
+}
+
+template<typename T>
+inline static std::vector<T> StringToArrayFast(const std::string& str, int n) {
+  if (n == 0) {
+    return std::vector<T>();
+  }
+  auto p_str = str.c_str();
+  __StringToTHelperFast<T, std::is_floating_point<T>::value> helper;
+  std::vector<T> ret(n);
+  for (int i = 0; i < n; ++i) {
+    p_str = helper(p_str, &ret[i]);
+  }
+  return ret;
+}
+
+template<typename T>
+inline static std::vector<T> StringToArray(const std::string& str, char delimiter) {
+  std::vector<std::string> strs = LightGBM::Common::Split(str.c_str(), delimiter);
+  std::vector<T> ret;
+  ret.reserve(strs.size());
+  __StringToTHelper<T, std::is_floating_point<T>::value> helper;
+  for (const auto& s : strs) {
+    ret.push_back(helper(s));
+  }
+  return ret;
+}
+
+template<typename T>
+inline static std::vector<T> StringToArray(const std::string& str, int n) {
+  if (n == 0) {
+    return std::vector<T>();
+  }
+  std::vector<std::string> strs = LightGBM::Common::Split(str.c_str(), ' ');
+  CHECK_EQ(strs.size(), static_cast<size_t>(n));
+  std::vector<T> ret;
+  ret.reserve(strs.size());
+  __StringToTHelper<T, std::is_floating_point<T>::value> helper;
+  for (const auto& s : strs) {
+    ret.push_back(helper(s));
+  }
+  return ret;
+}
+
+template<typename T>
+inline static std::string ArrayToStringFast(const std::vector<T>& arr, size_t n) {
+  if (arr.empty() || n == 0) {
+    return std::string("");
+  }
+  __TToStringHelperFast<T, std::is_floating_point<T>::value, std::is_unsigned<T>::value> helper;
+  const size_t buf_len = 16;
+  std::vector<char> buffer(buf_len);
+  std::stringstream str_buf;
+  str_buf.imbue(std::locale("C"));
+  helper(arr[0], buffer.data(), buf_len);
+  str_buf << buffer.data();
+  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
+    helper(arr[i], buffer.data(), buf_len);
+    str_buf << ' ' << buffer.data();
+  }
+  return str_buf.str();
+}
+
+inline static std::string ArrayToString(const std::vector<double>& arr, size_t n) {
+  if (arr.empty() || n == 0) {
+    return std::string("");
+  }
+  const size_t buf_len = 32;
+  std::vector<char> buffer(buf_len);
+  std::stringstream str_buf;
+  str_buf.imbue(std::locale("C"));
+  DoubleToStr(arr[0], buffer.data(), buf_len);
+  str_buf << buffer.data();
+  for (size_t i = 1; i < std::min(n, arr.size()); ++i) {
+    DoubleToStr(arr[i], buffer.data(), buf_len);
+    str_buf << ' ' << buffer.data();
+  }
+  return str_buf.str();
+}
+
+
+
+
 
 #include <algorithm>
 
