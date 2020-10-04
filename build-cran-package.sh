@@ -78,7 +78,6 @@ cd ${TEMP_R_DIR}
     done
     rm src/include/LightGBM/*.h.bak
 
-
     sed \
         -i.bak \
         -e 's/fmt\/format-inl\.h/LightGBM\/fmt\/format-inl\.h/' \
