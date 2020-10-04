@@ -78,8 +78,17 @@ cd ${TEMP_R_DIR}
     done
     rm src/include/LightGBM/*.h.bak
 
-    #include "../../../external_libs/fmt/include/fmt/format.h"
-    #include "../../../external_libs/fast_double_parser/include/fast_double_parser.h"
+
+    sed \
+        -i.bak \
+        -e 's/fmt\/format-inl\.h/LightGBM\/fmt\/format-inl\.h/' \
+        src/external_libs/fmt/format.cc
+
+    sed \
+        -i.bak \
+        -e 's/fmt\/os\.h/LightGBM\/fmt\/os\.h/' \
+        src/external_libs/fmt/os.cc
+
     sed \
         -i.bak \
         -e 's/\.\..*fmt\/format\.h/LightGBM\/fmt\/format\.h/' \
