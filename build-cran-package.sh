@@ -32,11 +32,6 @@ cp \
     external_libs/fast_double_parser/include/fast_double_parser.h \
     ${TEMP_R_DIR}/src/include/LightGBM
 
-mkdir -p ${TEMP_R_DIR}/src/external_libs/fmt
-cp \
-    external_libs/fmt/src/*.cc \
-    ${TEMP_R_DIR}/src/external_libs/fmt/
-
 mkdir -p ${TEMP_R_DIR}/src/include/LightGBM/fmt
 cp \
     external_libs/fmt/include/fmt/*.h \
@@ -77,16 +72,6 @@ cd ${TEMP_R_DIR}
         "${file}"
     done
     rm src/include/LightGBM/*.h.bak
-
-    sed \
-        -i.bak \
-        -e 's/fmt\/format-inl\.h/LightGBM\/fmt\/format-inl\.h/' \
-        src/external_libs/fmt/format.cc
-
-    sed \
-        -i.bak \
-        -e 's/fmt\/os\.h/LightGBM\/fmt\/os\.h/' \
-        src/external_libs/fmt/os.cc
 
     sed \
         -i.bak \
