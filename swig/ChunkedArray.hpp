@@ -86,14 +86,18 @@ class ChunkedArray
     }
 
     /**
-     * Returns the pointer to the raw array.
-     * Notice its size is greater than the number of stored strings by 1.
+     * Returns the pointer to the raw chunks data.
      *
-     * @return T** pointer to raw data (null-terminated).
+     * @return T** pointer to raw data.
      */
     T **data() noexcept
     {
         return _chunks.data();
+    }
+
+    void **void_data() noexcept
+    {
+        return reinterpret_cast<void**>(_chunks.data());
     }
 
     /**
