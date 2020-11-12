@@ -30,6 +30,48 @@ void print_container_stats(ChunkedArray<T> &ca) {
     );
 }
 
+template <typename T>
+void print_data(ChunkedArray<T> &x) {
+  size_t chunk_size = x.get_chunk_size();
+  T **data = x.data();
+
+  int chunk = 0;
+  int pos = 0;
+  cout << "Printing from T** data(): \n";
+  for (int i = 0; i < x.get_added_count(); ++i) {
+      cout << data[chunk][pos] << " ";
+
+      ++pos;
+      if (pos == chunk_size) {
+          pos = 0;
+          ++chunk;
+          cout << "\n";
+      }
+  }
+  cout << "\n^ Print complete ^\n";
+}
+
+template <typename T>
+void print_void_data(ChunkedArray<T> &x) {
+  size_t chunk_size = x.get_chunk_size();
+  T **data = reinterpret_cast<T**>(x.void_data());
+
+  int chunk = 0;
+  int pos = 0;
+  cout << "Printing from reinterpret_cast<T**>(void_data()):\n";
+  for (int i = 0; i < x.get_added_count(); ++i) {
+      cout << data[chunk][pos] << " ";
+
+      ++pos;
+      if (pos == chunk_size) {
+          pos = 0;
+          ++chunk;
+          cout << "\n";
+      }
+  }
+  cout << "\n^ Print complete ^\n";
+}
+
 int main() {
     const size_t chunk_size = 3;
     intChunkedArray ca = ChunkedArray<int>(chunk_size);
@@ -56,6 +98,9 @@ int main() {
         }
     }
     
+    print_data<int>(ca);
+    print_void_data<int>(ca);
+
     ca.release(); ca.release(); print_container_stats(ca); // Test double free behaviour.
     cout << "Done!" << endl;
 }
