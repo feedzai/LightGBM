@@ -190,11 +190,13 @@ class ChunkedArray
 
   private:
 
-    size_t _current_chunks_idx; //<! Index of chunks
-    size_t _current_chunk_idx;  //<! Index within chunk
-
     const size_t _chunk_size;
     std::vector<T*> _chunks;
+
+    // For add() interface & some of the get_*() queries:
+    size_t _current_chunks_idx; //<! Index of chunks
+    size_t _current_chunk_idx;  //<! Index within chunk
 };
+
 
 #endif // __CHUNKED_ARRAY_H__
