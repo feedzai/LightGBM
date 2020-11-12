@@ -6,14 +6,27 @@ using namespace std;
 using intChunkedArray=ChunkedArray<int>;
 using doubleChunkedArray = ChunkedArray<double>;
 
-int out_of_bounds = 2; // test get outside bounds.
+int out_of_bounds = 4; // test get outside bounds.
+
+template<class T>
+size_t get_merged_array_size(ChunkedArray<T> &ca) {
+    if (ca.empty()) {
+        return 0;
+    } else {
+        size_t prior_chunks_total_size = (ca.get_chunks_count() - 1) * ca.get_chunk_size();
+        return prior_chunks_total_size + ca.get_current_chunk_added_count();
+    }
+}
 
 template<class T>
 void print_container_stats(ChunkedArray<T> &ca) {
-    printf("\n\nContainer stats: %ld chunks of size %ld with %ld item(s) on last chunk.\n\n",
+    printf("\n\nContainer stats: %ld chunks of size %ld with %ld item(s) on last chunk (#elements=%ld).\n"
+           " > Should result in single array of size %ld.\n\n",
         ca.get_chunks_count(),
         ca.get_chunk_size(),
-        ca.get_current_chunk_added_count()
+        ca.get_current_chunk_added_count(),
+        ca.get_added_count(),
+        get_merged_array_size(ca)
     );
 }
 
@@ -28,9 +41,13 @@ int main() {
 
     int chunk = 0; 
     int pos = 0;
-    for (int i = 0; i <= ca.get_added_count() + out_of_bounds; ++i) {        
+    for (int i = 0; i < ca.get_added_count() + out_of_bounds; ++i) {        
 
-        cout << "@(" << chunk << "," << pos << ") = " << ca.getitem(chunk, pos, 10) << endl;        
+        bool within_added = i < ca.get_added_count();
+        bool within_bounds = ca.within_bounds(chunk, pos);
+        cout << "@(" << chunk << "," << pos << ") = " << ca.getitem(chunk, pos, 10) 
+        << " " << within_added << " " << within_bounds << endl;      
+
         ++pos;
 
         if (pos == ca.get_chunk_size()) {

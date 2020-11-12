@@ -133,7 +133,26 @@ class ChunkedArray
     }
 
     /**
+     * To reset storage call this. 
+     * Will release existing resources and prepare for reuse.
+     */
+    void clear() noexcept
+    {
+        release();
+        new_chunk();
+    }
+
+    /**
+     * Returns true if is empty.
+     */
+    bool empty() noexcept
+    {
+        return get_current_chunk_added_count() == 0;
+    }
+
+    /**
      * Deletes the allocated chunks.
+     * Do not use after this!
      */
     void release() noexcept
     {
