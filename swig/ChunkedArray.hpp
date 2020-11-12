@@ -157,8 +157,6 @@ class ChunkedArray
     void release() noexcept
     {
         std::for_each(_chunks.begin(), _chunks.end(), [](T* c) { delete[] c; });
-        _sizes.clear();
-        _sizes.shrink_to_fit();
         _chunks.clear();
         _chunks.shrink_to_fit();
         _current_chunks_idx = 0;
@@ -194,8 +192,6 @@ class ChunkedArray
 
     size_t _current_chunks_idx; //<! Index of chunks
     size_t _current_chunk_idx;  //<! Index within chunk
-
-    std::vector<int32_t> _sizes;
 
     const size_t _chunk_size;
     std::vector<T*> _chunks;
