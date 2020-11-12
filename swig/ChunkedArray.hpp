@@ -101,6 +101,32 @@ class ChunkedArray
     }
 
     /**
+     * Coalesces (copies chunked data) to an array of the same type.
+     */
+    void coalesce_to(T *other) {
+        if (this->empty()) {
+            return;
+        }
+
+        const size_t full_chunks = this->get_chunks_count() - 1;
+        
+        // Copy full chunks:
+        size_t i = 0;        
+        for(size_t chunk = 0; chunk < full_chunks; ++chunk) {
+            T* chunk_ptr = _chunks[chunk];
+            for(size_t chunk_pos = 0; chunk_pos < _chunk_size; ++chunk_pos) {
+                other[i++] = chunk_ptr[chunk_pos];
+            }                 
+        }
+        // Copy filled values from last chunk only:
+        const size_t last_chunk_elems = this->get_current_chunk_added_count();
+        T* chunk_ptr = _chunks[full_chunks];
+        for(size_t chunk_pos = 0; chunk_pos < last_chunk_elems; ++chunk_pos) {
+            other[i++] = chunk_ptr[chunk_pos];
+        }
+    }
+
+    /**
      * Return value from array of chunks.
      *
      * @param chunks_index index of the chunk
