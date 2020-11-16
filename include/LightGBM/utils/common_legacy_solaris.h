@@ -2,6 +2,10 @@
  * Copyright (c) 2016 Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for license information.
  */
+/*!
+ * This file is meant to be used ONLY IN SOLARIS!
+ * The newer code that replaced it is much faster!
+ */
 #ifndef LIGHTGBM_UTILS_COMMON_FUN_LEGACY_H_
 #define LIGHTGBM_UTILS_COMMON_FUN_LEGACY_H_
 
