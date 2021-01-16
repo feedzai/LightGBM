@@ -9,6 +9,7 @@ OPTION(USE_DEBUG "Set to ON for Debug mode" OFF)
 OPTION(BUILD_STATIC_LIB "Build static library" OFF)
 OPTION(__BUILD_FOR_R "Set to ON if building lib_lightgbm for use with the R package" OFF)
 OPTION(__INTEGRATE_OPENCL "Set to ON if building LightGBM with the OpenCL ICD Loader and its dependencies included" OFF)
+OPTION(BUILD_PROFILING_TESTS "Set to ON to compile profiling executables for development and benchmarks." OFF)
 
 if(APPLE)
   OPTION(APPLE_OUTPUT_DYLIB "Output dylib shared library" OFF)
@@ -452,6 +453,12 @@ if(__BUILD_FOR_R)
     TARGET_LINK_LIBRARIES(_lightgbm ${LIBR_CORE_LIBRARY})
   endif(MSVC)
 endif(__BUILD_FOR_R)
+
+
+if(BUILD_PROFILING_TESTS)
+    # For profiling builds with valgrind/callgrind use -DDEBUG=ON
+    add_executable(lightgbm_profile_single_row_predict profiling/profile_single_row_predict.cpp ${SOURCES})
+endif(BUILD_PROFILING_TESTS)
 
 install(TARGETS lightgbm _lightgbm
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

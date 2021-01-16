@@ -860,6 +860,9 @@ RowPairFunctionFromDenseMatric(const void* data, int num_row, int num_col, int d
 std::function<std::vector<std::pair<int, double>>(int row_idx)>
 RowPairFunctionFromDenseRows(const void** data, int num_col, int data_type);
 
+std::function<std::vector<std::pair<int, double>>(int row_idx)>
+RowPairFunctionFromDenseMatric2(const void* data, int num_row, int num_col, int data_type, int is_row_major);
+
 template<typename T>
 std::function<std::vector<std::pair<int, double>>(T idx)>
 RowFunctionFromCSR(const void* indptr, int indptr_type, const int32_t* indices,
@@ -2170,7 +2173,7 @@ int LGBM_BoosterPredictForMatSingleRowFast(FastConfigHandle fastConfig_handle,
   API_BEGIN();
   FastConfig *fastConfig = reinterpret_cast<FastConfig*>(fastConfig_handle);
   // Single row in row-major format:
-  auto get_row_fun = RowPairFunctionFromDenseMatric(data, 1, fastConfig->ncol, fastConfig->data_type, 1);
+  auto get_row_fun = RowPairFunctionFromDenseMatric2(data, 1, fastConfig->ncol, fastConfig->data_type, 1);
   fastConfig->booster->PredictSingleRow(fastConfig->predict_type, fastConfig->ncol,
                                         get_row_fun, fastConfig->config,
                                         out_result, out_len);
@@ -2371,6 +2374,40 @@ RowFunctionFromDenseMatric(const void* data, int num_row, int num_col, int data_
   return nullptr;
 }
 
+
+template<typename T>
+std::function<std::function<double (int col_idx)> (int row_idx)>
+RowFunctionFromDenseMatric_helper2(const void* data, size_t num_row, int num_col, int is_row_major) {
+  const T* data_ptr = reinterpret_cast<const T*>(data);
+  if (is_row_major) {
+    return [=] (int row_idx) {      
+      auto tmp_ptr = data_ptr + static_cast<size_t>(num_col) * row_idx;
+      return [=] (int col_idx) {        
+        return static_cast<double>(*(tmp_ptr + col_idx));              
+      };
+    };
+  } else {
+    return [=] (int row_idx) {
+      auto tmp_ptr = data_ptr + row_idx;
+      return [=] (int col_idx) {        
+        return static_cast<double>(*(tmp_ptr + num_row * col_idx));        
+      };
+    };
+  }
+}
+
+std::function<std::function<double (int col_idx)> (int row_idx)>
+RowFunctionFromDenseMatric2(const void* data, int num_row, int num_col, int data_type, int is_row_major) {
+  if (data_type == C_API_DTYPE_FLOAT32) {
+    return RowFunctionFromDenseMatric_helper2<float>(data, num_row, num_col, is_row_major);
+  } else if (data_type == C_API_DTYPE_FLOAT64) {
+    return RowFunctionFromDenseMatric_helper2<double>(data, num_row, num_col, is_row_major);
+  } else {
+    Log::Fatal("Unknown data type in RowFunctionFromDenseMatric");
+    return nullptr; // Will never be reached.
+  }
+}
+
 std::function<std::vector<std::pair<int, double>>(int row_idx)>
 RowPairFunctionFromDenseMatric(const void* data, int num_row, int num_col, int data_type, int is_row_major) {
   auto inner_function = RowFunctionFromDenseMatric(data, num_row, num_col, data_type, is_row_major);
@@ -2389,6 +2426,24 @@ RowPairFunctionFromDenseMatric(const void* data, int num_row, int num_col, int d
   }
   return nullptr;
 }
+
+std::function<std::vector<std::pair<int, double>>(int row_idx)>
+RowPairFunctionFromDenseMatric2(const void* data, int num_row, int num_col, int data_type, int is_row_major) {
+  auto row_function = RowFunctionFromDenseMatric2(data, num_row, num_col, data_type, is_row_major);    
+  return [row_function, num_col] (int row_idx) {
+    auto row_values = row_function(row_idx);
+    std::vector<std::pair<int, double>> ret;
+    ret.reserve(num_col);
+    for (int i = 0; i < num_col; ++i) {
+      double value = row_values(i);
+      if (std::fabs(value) > kZeroThreshold || std::isnan(value)) {
+        ret.emplace_back(i, value);
+      }
+    }      
+    return ret;
+  };  
+}
+
 
 // data is array of pointers to individual rows
 std::function<std::vector<std::pair<int, double>>(int row_idx)>
