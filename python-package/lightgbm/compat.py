@@ -1,51 +1,31 @@
 # coding: utf-8
 """Compatibility library."""
-from __future__ import absolute_import
 
 import inspect
 import sys
 
 import numpy as np
 
-is_py3 = (sys.version_info[0] == 3)
+if (sys.version_info[0] < 3):
+    raise Exception("LightGBM no longer supports Python 2.")
 
 """Compatibility between Python2 and Python3"""
-if is_py3:
-    zip_ = zip
-    string_type = str
-    numeric_types = (int, float, bool)
-    integer_types = (int, )
-    range_ = range
+numeric_types = (int, float, bool)
+integer_types = (int, )
 
-    def argc_(func):
-        """Count the number of arguments of a function."""
-        return len(inspect.signature(func).parameters)
+def argc_(func) -> int:
+    """Count the number of arguments of a function."""
+    return len(inspect.signature(func).parameters)
 
-    def decode_string(bytestring):
-        """Decode C bytestring to ordinary string."""
-        return bytestring.decode('utf-8')
-else:
-    from itertools import izip as zip_
-    string_type = basestring
-    numeric_types = (int, long, float, bool)
-    integer_types = (int, long)
-    range_ = xrange
-
-    def argc_(func):
-        """Count the number of arguments of a function."""
-        return len(inspect.getargspec(func).args)
-
-    def decode_string(bytestring):
-        """Decode C bytestring to ordinary string."""
-        return bytestring
+def decode_string(bytestring):
+    """Decode C bytestring to ordinary string."""
+    return bytestring.decode('utf-8')
 
 """json"""
 try:
     import simplejson as json
 except (ImportError, SyntaxError):
-    # simplejson does not support Python 3.2, it throws a SyntaxError
-    # because of u'...' Unicode literals.
-    import json
+    import json # type: ignore # false positive under mypy
 
 
 def json_default_with_numpy(obj):
@@ -66,15 +46,11 @@ try:
 except ImportError:
     PANDAS_INSTALLED = False
 
-    class Series(object):
+    class Series(object): # type: ignore
         """Dummy class for pandas.Series."""
 
-        pass
-
-    class DataFrame(object):
-        """Dummy class for pandas.DataFrame."""
-
-        pass
+    class DataFrame(object): # type: ignore
+        """Dummy class for pandas.DataFrame."""        
 
     is_dtype_sparse = None
 
@@ -103,7 +79,7 @@ try:
 except ImportError:
     DATATABLE_INSTALLED = False
 
-    class DataTable(object):
+    class DataTable(object): # type: ignore
         """Dummy class for DataTable."""
 
         pass

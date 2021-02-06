@@ -1,13 +1,11 @@
 # coding: utf-8
 """Callbacks library."""
-from __future__ import absolute_import
 
 import collections
 import warnings
 from operator import gt, lt
 
 from .basic import _ConfigAliases
-from .compat import range_
 
 
 class EarlyStopException(Exception):
@@ -30,7 +28,7 @@ class EarlyStopException(Exception):
 
 # Callback environment used by callbacks
 CallbackEnv = collections.namedtuple(
-    "LightGBMCallbackEnv",
+    "CallbackEnv",
     ["model",
      "params",
      "iteration",
@@ -219,18 +217,18 @@ def early_stopping(stopping_rounds, first_metric_only=False, verbose=True):
             _init(env)
         if not enabled[0]:
             return
-        for i in range_(len(env.evaluation_result_list)):
-            score = env.evaluation_result_list[i][2]
+        for i, evaluation_result in enumerate(env.evaluation_result_list):
+            score = evaluation_result[2]
             if best_score_list[i] is None or cmp_op[i](score, best_score[i]):
                 best_score[i] = score
                 best_iter[i] = env.iteration
                 best_score_list[i] = env.evaluation_result_list
             # split is needed for "<dataset type> <metric>" case (e.g. "train l1")
-            eval_name_splitted = env.evaluation_result_list[i][1].split(" ")
+            eval_name_splitted = evaluation_result[1].split(" ")
             if first_metric_only and first_metric[0] != eval_name_splitted[-1]:
                 continue  # use only the first metric for early stopping
-            if ((env.evaluation_result_list[i][0] == "cv_agg" and eval_name_splitted[0] == "train"
-                 or env.evaluation_result_list[i][0] == env.model._train_data_name)):
+            if ((evaluation_result[0] == "cv_agg" and eval_name_splitted[0] == "train"
+                 or evaluation_result[0] == env.model._train_data_name)):
                 _final_iteration_check(env, eval_name_splitted, i)
                 continue  # train data for lgb.cv or sklearn wrapper (underlying lgb.train)
             elif env.iteration - best_iter[i] >= stopping_rounds:

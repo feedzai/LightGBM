@@ -1,6 +1,5 @@
 # coding: utf-8
 """Scikit-learn wrapper interface for LightGBM."""
-from __future__ import absolute_import
 
 import copy
 import warnings
@@ -12,7 +11,7 @@ from .compat import (SKLEARN_INSTALLED, _LGBMClassifierBase,
                      LGBMNotFittedError, _LGBMLabelEncoder, _LGBMModelBase,
                      _LGBMRegressorBase, _LGBMCheckXY, _LGBMCheckArray, _LGBMCheckSampleWeight,
                      _LGBMAssertAllFinite, _LGBMCheckClassificationTargets, _LGBMComputeSampleWeight,
-                     argc_, range_, zip_, string_type, DataFrame, DataTable)
+                     argc_, DataFrame, DataTable)
 from .engine import train
 
 
@@ -88,8 +87,8 @@ class _ObjectiveFunctionWrapper(object):
                 num_class = len(grad) // num_data
                 if num_class * num_data != len(grad):
                     raise ValueError("Length of grad and hess should equal to num_class * num_data")
-                for k in range_(num_class):
-                    for i in range_(num_data):
+                for k in range(num_class):
+                    for i in range(num_data):
                         idx = k * num_data + i
                         grad[idx] *= weight[i]
                         hess[idx] *= weight[i]
@@ -510,10 +509,10 @@ class LGBMModel(_LGBMModelBase):
 
         # Separate built-in from callable evaluation metrics
         eval_metrics_callable = [_EvalFunctionWrapper(f) for f in eval_metric_list if callable(f)]
-        eval_metrics_builtin = [m for m in eval_metric_list if isinstance(m, string_type)]
+        eval_metrics_builtin = [m for m in eval_metric_list if isinstance(m, str)]
 
         # register default metric for consistency with callable eval_metric case
-        original_metric = self._objective if isinstance(self._objective, string_type) else None
+        original_metric = self._objective if isinstance(self._objective, str) else None
         if original_metric is None:
             # try to deduce from class instance
             if isinstance(self, LGBMRegressor):
@@ -529,7 +528,7 @@ class LGBMModel(_LGBMModelBase):
                 original_metric = params.pop(metric_alias)
 
         # concatenate metric from params (or default if not provided in params) and eval_metric
-        original_metric = [original_metric] if isinstance(original_metric, (string_type, type(None))) else original_metric
+        original_metric = [original_metric] if isinstance(original_metric, (str, type(None))) else original_metric
         params['metric'] = [e for e in eval_metrics_builtin if e not in original_metric] + original_metric
         params['metric'] = [metric for metric in params['metric'] if metric is not None]
 
@@ -771,7 +770,7 @@ class LGBMRegressor(LGBMModel, _LGBMRegressorBase):
                                        callbacks=callbacks, init_model=init_model)
         return self
 
-    _base_doc = LGBMModel.fit.__doc__
+    _base_doc = LGBMModel.fit.__doc__ or ""
     _base_doc = (_base_doc[:_base_doc.find('group :')]
                  + _base_doc[_base_doc.find('eval_set :'):])
     _base_doc = (_base_doc[:_base_doc.find('eval_class_weight :')]
@@ -795,7 +794,7 @@ class LGBMClassifier(LGBMModel, _LGBMClassifierBase):
         _LGBMCheckClassificationTargets(y)
         self._le = _LGBMLabelEncoder().fit(y)
         _y = self._le.transform(y)
-        self._class_map = dict(zip_(self._le.classes_, self._le.transform(self._le.classes_)))
+        self._class_map = dict(zip(self._le.classes_, self._le.transform(self._le.classes_)))
         if isinstance(self.class_weight, dict):
             self._class_weight = {self._class_map[k]: v for k, v in self.class_weight.items()}
 
@@ -809,7 +808,7 @@ class LGBMClassifier(LGBMModel, _LGBMClassifierBase):
                 self._objective = "multiclass"
 
         if not callable(eval_metric):
-            if isinstance(eval_metric, (string_type, type(None))):
+            if isinstance(eval_metric, (str, type(None))):
                 eval_metric = [eval_metric]
             if self._n_classes > 2:
                 for index, metric in enumerate(eval_metric):
@@ -849,7 +848,7 @@ class LGBMClassifier(LGBMModel, _LGBMClassifierBase):
                                         callbacks=callbacks, init_model=init_model)
         return self
 
-    _base_doc = LGBMModel.fit.__doc__
+    _base_doc = LGBMModel.fit.__doc__ or ""
     _base_doc = (_base_doc[:_base_doc.find('group :')]
                  + _base_doc[_base_doc.find('eval_set :'):])
     fit.__doc__ = (_base_doc[:_base_doc.find('eval_group :')]
@@ -959,7 +958,7 @@ class LGBMRanker(LGBMModel):
             elif len(eval_group) != len(eval_set):
                 raise ValueError("Length of eval_group should be equal to eval_set")
             elif (isinstance(eval_group, dict)
-                  and any(i not in eval_group or eval_group[i] is None for i in range_(len(eval_group)))
+                  and any(i not in eval_group or eval_group[i] is None for i in range(len(eval_group)))
                   or isinstance(eval_group, list)
                   and any(group is None for group in eval_group)):
                 raise ValueError("Should set group for all eval datasets for ranking task; "
@@ -978,7 +977,7 @@ class LGBMRanker(LGBMModel):
                                     callbacks=callbacks, init_model=init_model)
         return self
 
-    _base_doc = LGBMModel.fit.__doc__
+    _base_doc = LGBMModel.fit.__doc__ or ""
     fit.__doc__ = (_base_doc[:_base_doc.find('eval_class_weight :')]
                    + _base_doc[_base_doc.find('eval_init_score :'):])
     _base_doc = fit.__doc__
