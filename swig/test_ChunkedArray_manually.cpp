@@ -1,15 +1,21 @@
 #include <iostream>
-#include "ChunkedArray.hpp"
+#include <sstream>
 #include <stdio.h>
+#include <assert.h>
+
+#include "ChunkedArray.hpp"
 using namespace std;
 
 using intChunkedArray=ChunkedArray<int>;
 using doubleChunkedArray = ChunkedArray<double>;
 
-int out_of_bounds = 4; // test get outside bounds.
+// Test data
+const int out_of_bounds = 4; // test get outside bounds.
+const size_t chunk_size = 3;
+const std::vector<int> ref = {1, 2, 3, 4, 5, 6, 7};
 
 template<class T>
-size_t get_merged_array_size(ChunkedArray<T> &ca) {
+size_t _get_merged_array_size(ChunkedArray<T> &ca) {
     if (ca.empty()) {
         return 0;
     } else {
@@ -26,23 +32,23 @@ void print_container_stats(ChunkedArray<T> &ca) {
         ca.get_chunk_size(),
         ca.get_current_chunk_added_count(),
         ca.get_added_count(),
-        get_merged_array_size(ca)
+        _get_merged_array_size(ca)
     );
 }
 
 template <typename T>
-void _print_chunked_data(ChunkedArray<T> &x, T** data) {
+void _print_chunked_data(ChunkedArray<T> &x, T** data, std::ostream &o = std::cout) {
   int chunk = 0;
   int pos = 0;
-  
+
   for (int i = 0; i < x.get_added_count(); ++i) {
-      cout << data[chunk][pos] << " ";
+      o << data[chunk][pos] << " ";
 
       ++pos;
       if (pos == x.get_chunk_size()) {
           pos = 0;
           ++chunk;
-          cout << "\n";
+          o << "\n";
       }
   }
 }
@@ -56,42 +62,110 @@ void print_data(ChunkedArray<T> &x) {
 }
 
 template <typename T>
-void print_void_data(ChunkedArray<T> &x) {  
+void print_void_data(ChunkedArray<T> &x) {
   T **data = reinterpret_cast<T**>(x.void_data());
   cout << "Printing from reinterpret_cast<T**>(void_data()):\n";
   _print_chunked_data(x, data);
   cout << "\n^ Print complete ^\n";
 }
 
-int main() {
-    const size_t chunk_size = 3;
-    intChunkedArray ca = ChunkedArray<int>(chunk_size);
-
-    for (int i = 1; i <= 7; ++i) {
-        ca.add(i);
-    }
-    print_container_stats(ca);
-
-    int chunk = 0; 
+template <typename T>
+void print_ChunkedArray_contents(ChunkedArray<T> &ca) {
+    int chunk = 0;
     int pos = 0;
-    for (int i = 0; i < ca.get_added_count() + out_of_bounds; ++i) {        
+    for (int i = 0; i < ca.get_added_count() + out_of_bounds; ++i) {
 
         bool within_added = i < ca.get_added_count();
         bool within_bounds = ca.within_bounds(chunk, pos);
-        cout << "@(" << chunk << "," << pos << ") = " << ca.getitem(chunk, pos, 10) 
-        << " " << within_added << " " << within_bounds << endl;      
+        cout << "@(" << chunk << "," << pos << ") = " << ca.getitem(chunk, pos, 10)
+        << " " << within_added << " " << within_bounds << endl;
 
         ++pos;
 
         if (pos == ca.get_chunk_size()) {
             ++chunk;
-            pos = 0; 
+            pos = 0;
         }
     }
-    
+}
+
+/**
+ * Ensure coalesce_to works and dumps all the inserted data correctly.
+ */
+void test_coalesce_to(const intChunkedArray &ca, const std::vector<int> &ref) {
+    std::vector<int> coalesced_out(ca.get_added_count());
+
+    ca.coalesce_to(coalesced_out.data());
+
+    assert(ref.size() == coalesced_out.size());
+    assert(std::equal(ref.begin(), ref.end(), coalesced_out.begin()));
+}
+
+/**
+ * By retrieving all the data to a format split by chunks, one can ensure
+ * that the data was stored correctly and with the correct memory layout.
+ */
+template <typename T>
+void test_data_layout(ChunkedArray<T> &ca, const std::vector<T> &ref, bool void_data) {
+    std::stringstream ss, ss_ref;
+    T **data = void_data? reinterpret_cast<T**>(ca.void_data()) : ca.data();
+    // Dump each chunk represented by a line with elements split by space:
+    for (int i = 0; i < ref.size(); ++i) {
+        if ((i > 0) && (i % chunk_size == 0))
+            ss_ref << "\n";
+        ss_ref << ref[i] << " ";
+    }
+
+    _print_chunked_data(ca, data, ss); // Dump chunked data to this same string format.
+    assert (ss_ref.str() == ss.str());
+}
+
+/**
+ * Test that using, clearing and reusing uses the latest data only.
+ */
+void test_clear() {
+    // Set-up with some data
+    const std::vector<int> ref2 = {1, 2, 5, -1};
+    ChunkedArray<int> ca = ChunkedArray<int>(chunk_size);
+    for (auto v: ref) {
+        ca.add(v);
+    }
+    test_coalesce_to(ca, ref); // Should have the same contents.
+
+    // Clear & re-use:
+    ca.clear();
+    for (auto v: ref2) {
+        ca.add(v); // Fill with new contents.
+    }
+
+    // Ensure it still works:
+    test_coalesce_to(ca, ref2); // Should match the new reference content.
+}
+
+int main() {
+    // Initialize test variables. ////////////////////////////////////////////////////
+    ChunkedArray<int> ca = ChunkedArray<int>(chunk_size);
+    for (auto v: ref) {
+        ca.add(v); // Indirectly test insertions through the retrieval tests.
+    }
+
+    // Tests /////////////////////////////////////////////////////////////////////////
+
+    assert(ca.get_added_count() == ref.size());
+    test_coalesce_to(ca, ref);
+
+    // Test chunked data layout for retrieval:
+    test_data_layout<int>(ca, ref, false);
+    test_data_layout<int>(ca, ref, true);
+
+    test_clear();
+
+    // For manual verification - useful outputs //////////////////////////////////////
+    print_container_stats(ca);
+    print_ChunkedArray_contents(ca);
     print_data<int>(ca);
     print_void_data<int>(ca);
-
-    ca.release(); ca.release(); print_container_stats(ca); // Test double free behaviour.
+    ca.release(); ca.release(); print_container_stats(ca); // Check double free behaviour.
     cout << "Done!" << endl;
+    return 0;
 }
