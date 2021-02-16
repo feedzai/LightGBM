@@ -30,14 +30,14 @@
  *  2. data() or void_data()     # retrieves a T** or void** pointer (useful for `LGBM_DatasetCreateFromMats`).
  *
  * Useful query methods (all O(1)):
- *  - get_added_count()   # total count of added elements
+ *  - get_add_count()   # total count of added elements
  *  - get_chunks_count()  # how many chunks are currently allocated.
  *  - get_current_chunk_added_count()  # for the last add() chunk, how many items there are.
  *  - get_chunk_size()    # Get constant chunk_size from constructor call.
  *
  *  With those you can generate int32_t sizes[]. Last chunk can be smaller than chunk_size, so, for any i:
  *    - sizes[i<last] = get_chunk_size()
- *    - sizes[i==last] = get_added_count()
+ *    - sizes[i==last] = get_add_count()
  *
  *
  * === Low-level insert API intro ===
@@ -77,7 +77,7 @@ class ChunkedArray
         _current_chunk_idx += 1;
     }
 
-    size_t get_added_count() const {
+    size_t get_add_count() const {
         return _current_chunks_idx * _chunk_size + _current_chunk_idx;
     }
 

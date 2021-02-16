@@ -31,7 +31,7 @@ void print_container_stats(ChunkedArray<T> &ca) {
         ca.get_chunks_count(),
         ca.get_chunk_size(),
         ca.get_current_chunk_added_count(),
-        ca.get_added_count(),
+        ca.get_add_count(),
         _get_merged_array_size(ca)
     );
 }
@@ -41,7 +41,7 @@ void _print_chunked_data(ChunkedArray<T> &x, T** data, std::ostream &o = std::co
   int chunk = 0;
   int pos = 0;
 
-  for (int i = 0; i < x.get_added_count(); ++i) {
+  for (int i = 0; i < x.get_add_count(); ++i) {
       o << data[chunk][pos] << " ";
 
       ++pos;
@@ -73,9 +73,9 @@ template <typename T>
 void print_ChunkedArray_contents(ChunkedArray<T> &ca) {
     int chunk = 0;
     int pos = 0;
-    for (int i = 0; i < ca.get_added_count() + out_of_bounds; ++i) {
+    for (int i = 0; i < ca.get_add_count() + out_of_bounds; ++i) {
 
-        bool within_added = i < ca.get_added_count();
+        bool within_added = i < ca.get_add_count();
         bool within_bounds = ca.within_bounds(chunk, pos);
         cout << "@(" << chunk << "," << pos << ") = " << ca.getitem(chunk, pos, 10)
         << " " << within_added << " " << within_bounds << endl;
@@ -93,7 +93,7 @@ void print_ChunkedArray_contents(ChunkedArray<T> &ca) {
  * Ensure coalesce_to works and dumps all the inserted data correctly.
  */
 void test_coalesce_to(const intChunkedArray &ca, const std::vector<int> &ref) {
-    std::vector<int> coalesced_out(ca.get_added_count());
+    std::vector<int> coalesced_out(ca.get_add_count());
 
     ca.coalesce_to(coalesced_out.data());
 
@@ -151,7 +151,7 @@ int main() {
 
     // Tests /////////////////////////////////////////////////////////////////////////
 
-    assert(ca.get_added_count() == ref.size());
+    assert(ca.get_add_count() == ref.size());
     test_coalesce_to(ca, ref);
 
     // Test chunked data layout for retrieval:
