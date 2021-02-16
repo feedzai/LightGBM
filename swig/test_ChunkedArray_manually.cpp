@@ -31,44 +31,35 @@ void print_container_stats(ChunkedArray<T> &ca) {
 }
 
 template <typename T>
-void print_data(ChunkedArray<T> &x) {
-  size_t chunk_size = x.get_chunk_size();
-  T **data = x.data();
-
+void _print_chunked_data(ChunkedArray<T> &x, T** data) {
   int chunk = 0;
   int pos = 0;
-  cout << "Printing from T** data(): \n";
+  
   for (int i = 0; i < x.get_added_count(); ++i) {
       cout << data[chunk][pos] << " ";
 
       ++pos;
-      if (pos == chunk_size) {
+      if (pos == x.get_chunk_size()) {
           pos = 0;
           ++chunk;
           cout << "\n";
       }
   }
+}
+
+template <typename T>
+void print_data(ChunkedArray<T> &x) {
+  T **data = x.data();
+  cout << "Printing from T** data(): \n";
+  _print_chunked_data(x, data);
   cout << "\n^ Print complete ^\n";
 }
 
 template <typename T>
-void print_void_data(ChunkedArray<T> &x) {
-  size_t chunk_size = x.get_chunk_size();
+void print_void_data(ChunkedArray<T> &x) {  
   T **data = reinterpret_cast<T**>(x.void_data());
-
-  int chunk = 0;
-  int pos = 0;
   cout << "Printing from reinterpret_cast<T**>(void_data()):\n";
-  for (int i = 0; i < x.get_added_count(); ++i) {
-      cout << data[chunk][pos] << " ";
-
-      ++pos;
-      if (pos == chunk_size) {
-          pos = 0;
-          ++chunk;
-          cout << "\n";
-      }
-  }
+  _print_chunked_data(x, data);
   cout << "\n^ Print complete ^\n";
 }
 

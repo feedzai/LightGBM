@@ -13,30 +13,39 @@
  * Container that manages a dynamic array of fixed-length chunks.
  *
  * The class also takes care of allocation & release of the underlying
- * memory.
+ * memory. It can be used with either a high or low-level API.
+ * 
+ * The high-level API allocates chunks as needed, manages addresses automatically and keeps
+ * track of number of inserted elements, but is not thread-safe (ok as usually input is a streaming iterator).
+ * For parallel input sources the low-level API must be used.
  * 
  * Note: When using this for `LGBM_DatasetCreateFromMats` use a 
  *       chunk_size multiple of #num_cols for your dataset, so each chunk
  *       contains "complete" instances.
  * 
+ * === High-level insert API intro ===
+ * 
  * The easiest way to use is:
- *  0. ChunkedArray(chunk_size) # Choose appropriate size
- *  1. add(value) # as many times as you want (will generate chunks as needed)
- *  2. data()     # retrieves a T** pointer (useful for `LGBM_DatasetCreateFromMats`).
+ *  0. ChunkedArray(chunk_size)  # Choose appropriate size
+ *  1. add(value)                # as many times as you want (will generate chunks as needed)
+ *  2. data() or void_data()     # retrieves a T** or void** pointer (useful for `LGBM_DatasetCreateFromMats`).
  * 
- * Can then find useful the following query methods: 
- *  - get_added_count() # total count of added elements 
- *  - get_chunks_count() # how many chunks are currently allocated.
- *  - get_current_chunk_added_count() # for the last add() chunk, how many items are there
- *  - get_chunk_size() # constant of initialization. retrieves chunk_size from constructor call.
+ * Useful query methods (all O(1)): 
+ *  - get_added_count()   # total count of added elements 
+ *  - get_chunks_count()  # how many chunks are currently allocated.
+ *  - get_current_chunk_added_count()  # for the last add() chunk, how many items there are.
+ *  - get_chunk_size()    # Get constant chunk_size from constructor call.
+ * 
+ *  With those you can generate int32_t sizes[]. Last chunk can be smaller than chunk_size, so, for any i:
+ *    - sizes[i<last] = get_chunk_size()
+ *    - sizes[i==last] = get_added_count()
  * 
  * 
- * With those you can generate int32_t sizes[]. (last chunk can be smaller than chunk_size)
+ * === Low-level insert API intro ===
  * 
- * =======================================
- * 
- * Note: For advanced users (useful for reading in parallel)
- *       You can also manually call new_chunk() as many times as you want, and setitem(chunk, idx, value) explicitly.
+ * For advanced usage - useful for inserting in parallel - one can also:
+ *  1. call new_chunk() at any time for as many chunks as needed.  (thread-UNsafe)
+ *  2. call setitem(chunk, idx, value) to insert each value.       (thread-safe)
  * 
  */
 template <class T>
@@ -95,6 +104,12 @@ class ChunkedArray
         return _chunks.data();
     }
 
+    /**
+     * Returns the pointer to the raw chunks data, but cast to void**.
+     * This is so ``LGBM_DatasetCreateFromMats`` accepts it.
+     *
+     * @return void** pointer to raw data.
+     */
     void **void_data() noexcept
     {
         return reinterpret_cast<void**>(_chunks.data());
@@ -102,6 +117,7 @@ class ChunkedArray
 
     /**
      * Coalesces (copies chunked data) to an array of the same type.
+     * It assumes that ``other`` has enough space to receive that data.
      */
     void coalesce_to(T *other) {
         if (this->empty()) {
@@ -181,8 +197,8 @@ class ChunkedArray
     }
 
     /**
-     * Deletes the allocated chunks.
-     * Do not use after this!
+     * Deletes all the allocated chunks.
+     * Do not use container after this! See ``clear()`` instead.
      */
     void release() noexcept
     {
@@ -198,14 +214,7 @@ class ChunkedArray
     }
 
     /**
-     * Allocate an array of fixed-length strings.
-     *
-     * Since a NULL-terminated array is required by SWIG's `various.i`,
-     * the size of the array is actually `num_elements + 1` but only
-     * num_elements are filled.
-     *
-     * @param num_elements Number of strings to store in the array.
-     * @param string_size The size of each string in the array.
+     * Adds a new chunk to the array of chunks. Not thread-safe.
      */
     void new_chunk()
     {       
