@@ -109,7 +109,7 @@ class ChunkedArray
      *
      * @return void** pointer to raw data.
      */
-    void **void_data() noexcept
+    void **data_as_void() noexcept
     {
         return reinterpret_cast<void**>(_chunks.data());
     }

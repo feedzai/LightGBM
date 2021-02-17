@@ -1,3 +1,11 @@
+/**
+ * Tests for ChunkedArray.
+ *
+ * Some tests require visual assessment.
+ * We should move this to googletest/Catch2 in the future
+ * and get rid of the tests that require visual checks.
+ */
+
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -63,8 +71,8 @@ void print_data(ChunkedArray<T> &x) {
 
 template <typename T>
 void print_void_data(ChunkedArray<T> &x) {
-  T **data = reinterpret_cast<T**>(x.void_data());
-  cout << "Printing from reinterpret_cast<T**>(void_data()):\n";
+  T **data = reinterpret_cast<T**>(x.data_as_void());
+  cout << "Printing from reinterpret_cast<T**>(data_as_void()):\n";
   _print_chunked_data(x, data);
   cout << "\n^ Print complete ^\n";
 }
@@ -106,9 +114,9 @@ void test_coalesce_to(const intChunkedArray &ca, const std::vector<int> &ref) {
  * that the data was stored correctly and with the correct memory layout.
  */
 template <typename T>
-void test_data_layout(ChunkedArray<T> &ca, const std::vector<T> &ref, bool void_data) {
+void test_data_layout(ChunkedArray<T> &ca, const std::vector<T> &ref, bool data_as_void) {
     std::stringstream ss, ss_ref;
-    T **data = void_data? reinterpret_cast<T**>(ca.void_data()) : ca.data();
+    T **data = data_as_void? reinterpret_cast<T**>(ca.data_as_void()) : ca.data();
     // Dump each chunk represented by a line with elements split by space:
     for (int i = 0; i < ref.size(); ++i) {
         if ((i > 0) && (i % chunk_size == 0))
