@@ -378,3 +378,4 @@ void NAME##_setitem(TYPE *ary, int64_t index, TYPE value);
 %pointer_handle(void*, voidpp)
 
 %include "StringArray_API_extensions.i"
+%include "ChunkedArray_API_extensions.i"
