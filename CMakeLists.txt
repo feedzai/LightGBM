@@ -451,6 +451,12 @@ if(__BUILD_FOR_R)
   endif(MSVC)
 endif(__BUILD_FOR_R)
 
+OPTION(BUILD_PROFILING_TESTS "Set to ON to compile profiling executables for development and benchmarks." OFF)
+if(BUILD_PROFILING_TESTS)
+   # For profiling builds with valgrind/callgrind use -DUSE_DEBUG=ON
+  add_executable(lightgbm_profile_single_row_predict profiling/profile_single_row_predict.cpp ${SOURCES})
+endif(BUILD_PROFILING_TESTS)
+
 install(TARGETS lightgbm _lightgbm
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
